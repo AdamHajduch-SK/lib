@@ -25,6 +25,13 @@ class Transmitter
 public:
     virtual ~Transmitter() {}
 
+    //! Best-effort reset for a strategy whose underlying peripheral was forcibly disabled/
+    //! reconfigured out from under it (e.g. a USART bus-recovery reset). Default no-op - not
+    //! every strategy has state that can go stale that way (e.g. interrupt-based transmit has no
+    //! chained buffer left dangling in hardware). See DMATransmitter::Reset for the strategy that
+    //! actually needs this.
+    virtual void Reset() {}
+
 protected:
     //! Adds another buffer to the Transmitter, returns the number of bytes accepted for sending
     virtual size_t TryAddBlock(Span block) = 0;
