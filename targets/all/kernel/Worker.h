@@ -24,7 +24,9 @@ public:
 
 struct WorkerOptions
 {
-    static constexpr size_t DefaultStack = 1024;
+    // 1024 overflowed (MPU guard hard fault, MSTKERR) in JsonSimpleProcessor's parse worker: card
+    // reads made from inside the parse run FatFs + the SD driver synchronously on this same stack
+    static constexpr size_t DefaultStack = 2560;
     size_t stack = DefaultStack;
     WorkerStackAllocator* stackAlloc = NULL;
     async_res_t (*adjustResult)(async_res_t) = NULL;
@@ -61,7 +63,7 @@ public:
     };
 
     template<typename TRes, typename... Args, typename... AArgs> ALWAYS_INLINE static async_once(RunWithOptions, const WorkerOptions& opts, TRes (*fn)(Args...), AArgs&&... args);
-    template<typename TRes, typename... Args, typename... AArgs> ALWAYS_INLINE static async_once(RunWithOptions, const WorkerOptions& opts, Delegate<TRes, Args...> fn, AArgs&&... args) { return async_forward(RunWithOptions, {}, fn.FunctionPointer(), fn.Target(), args...); }
+    template<typename TRes, typename... Args, typename... AArgs> ALWAYS_INLINE static async_once(RunWithOptions, const WorkerOptions& opts, Delegate<TRes, Args...> fn, AArgs&&... args) { return async_forward(RunWithOptions, opts, fn.FunctionPointer(), fn.Target(), args...); }
     template<typename TRes, typename... Args, typename... AArgs> ALWAYS_INLINE static async_once(Run, TRes (*fn)(Args...), AArgs&&... args) { return async_forward(RunWithOptions, {}, fn, args...); }
     template<typename TRes, typename... Args, typename... AArgs> ALWAYS_INLINE static async_once(Run, Delegate<TRes, Args...> fn, AArgs&&... args) { return async_forward(RunWithOptions, {}, fn, args...); }
 
